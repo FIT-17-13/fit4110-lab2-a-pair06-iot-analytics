@@ -118,3 +118,29 @@ Ví dụ response (tóm tắt):
 	"interval": "hour",
 	"metrics": { "temperature.avg": 23.4, "temperature.count": 120 }
 }
+
+---
+
+## 8. Ghi chép đàm phán / Quyết định thiết kế (góc nhìn Consumer)
+
+| Vấn đề | Quyết định | Lý do | Tác động |
+|---|---|---|---|
+| Tên event | Đồng ý dùng `sensors.telemetry.ingested` và `devices.status.changed` | Bản đồ rõ ràng đến domain và resource; hỗ trợ lọc theo topic | Consumer sẽ subscribe các topic này; cập nhật tài liệu cho AsyncAPI |
+| Chính sách retry | Mong đợi at-least-once delivery; consumer phải idempotent | Broker có retry không tránh được; đơn giản hoá producer | Cần cache dedupe và ghi idempotent ở consumer
+| Ordering | Yêu cầu partition theo `deviceId` để giữ ordering theo thiết bị | Nhiều chuyển đổi trạng thái phụ thuộc ordering theo device | Producer phải đặt partition key; consumer vẫn xử lý late-arrival
+| Cấu trúc payload | Dùng `data.metrics[]` với name/value và unit tùy chọn | Linh hoạt để thêm metric mà không phá vỡ schema | Consumer map tên metric vào trường nội bộ; đồng thuận cách xử lý unit
+| Versioning | Kiểm tra `schemaVersion` trên message; từ chối hoặc chuyển MAJOR không nhận biết vào DLQ | Tránh xử lý sai lặng lẽ khi incompatible | Bổ sung monitoring/alert khi gặp version lạ
+| Retention | Yêu cầu retention raw events 14 ngày để hỗ trợ replay | Cho phép reprocess các cửa sổ thời gian | Chi phí lưu trữ; cần thống nhất chiến lược lưu trữ dài hạn
+| Idempotency | Yêu cầu `eventId` và TTL dedupe consumer = 14d + biên an toàn | Cần tránh double-count | Cần tính toán kích thước và hiệu năng cho dedup store
+
+## 9. Chuẩn bị cho Lab 03 (sẵn sàng chuyển sang AsyncAPI)
+
+- Tên topic: xác nhận tên topic cuối cùng và wildcard subscription (ví dụ `sensors.*.ingested`) nếu cần.
+- Tổ chức schema: chuyển `telemetry.ingested` và `device.status.changed` vào `components/messages` và tái sử dụng component `metadata`/`common`.
+- Versioning: định nghĩa `message.version` và quy tắc đàm phán cho thay đổi MAJOR/Minor.
+- Tương thích ngược: consumer phải bỏ qua các trường không biết; provider chỉ thêm trường tùy chọn trong minor bump.
+- Khả năng mở rộng: định nghĩa schema cho phần tử `metrics` để mở rộng mà không phá vỡ các consumer hiện có.
+
+---
+
+Nếu bạn muốn, tôi có thể thực hiện bước tiếp: chuyển các contract này thành skeleton AsyncAPI (YAML phần) chuẩn bị cho Lab 03, hoặc mở PR với các tài liệu đã cập nhật.
