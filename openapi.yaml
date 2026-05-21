@@ -8,11 +8,13 @@ info:
   contact:
     name: FIT4110 Teaching Team
     email: fit4110@example.edu.vn
+
 servers:
   - url: http://localhost:4010
     description: Prism mock server
   - url: https://api.campus.local
     description: Class network placeholder
+
 tags:
   - name: health
     description: Kiểm tra trạng thái service
@@ -20,8 +22,10 @@ tags:
     description: Quản lý cảnh báo Smart Campus
   - name: events
     description: Quản lý sự kiện nghiệp vụ
+
 security:
   - bearerAuth: []
+
 paths:
   /health:
     get:
@@ -536,7 +540,6 @@ components:
           example: Field cardId không đúng định dạng
         instance:
           type: [string, 'null']
-          format: uri
           description: URI của request gây lỗi.
           example: /alerts
         errors:
