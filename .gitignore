@@ -12,3 +12,6 @@ node_modules/
 
 # Optional local captures
 *.har
+ 
+# Aider history 
+.aider* 
